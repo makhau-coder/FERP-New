@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>FERP Feedback</h1>
+    <p class="subtitle">Select feedback type to auto-fill</p>
+
+    <button id="btn-positive" class="btn btn-positive">
+      <span class="icon">👍</span>
+      <span class="label">Positive</span>
+      <span class="desc">Excellent ratings</span>
+    </button>
+
+    <button id="btn-neutral" class="btn btn-neutral">
+      <span class="icon">😐</span>
+      <span class="label">Neutral</span>
+      <span class="desc">Good / Average ratings</span>
+    </button>
+
+    <button id="btn-negative" class="btn btn-negative">
+      <span class="icon">👎</span>
+      <span class="label">Negative</span>
+      <span class="desc">Poor ratings</span>
+    </button>
+
+    <div id="status" class="status"></div>
+
+    <p class="footer">Fill CAPTCHA manually after filling</p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+
