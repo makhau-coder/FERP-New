@@ -1,68 +1,50 @@
 (() => {
 
     /* ============================================================
-       POSITIVE FEEDBACK — End Term (Lab + Theory)
+       POSITIVE FEEDBACK — Dynamic Filler (Lab & Theory)
+       Works via browser console from top window or iframe.
        ============================================================ */
 
-    const RADIO_ANSWERS = {
-        question_1:  "5",
-        question_2:  "5",
-        question_3:  "5",
-        question_4:  "5",
-        question_5:  "5",
-        question_6:  "5",
-        question_7:  "5",
-        question_8:  "5",
-        question_9:  "5",
-        question_10: "5",
-        question_11: "3",
-        question_12: "3",
-        question_13: "5",
-        question_14: "5",
-        question_15: "5"
-    };
+    const MAIN_VALUE   = "5";  // Excellent
+    const EFFORT_VALUE = "3";  // Average for effort / workload
 
-    const TEXTAREA_ANSWERS = {
-        /* Lab sub-textareas */
-        question_9_1: "The teacher demonstrates exceptional knowledge and expertise, explains concepts with great clarity, and creates an encouraging learning environment that makes complex laboratory work easy to understand and follow.",
-        question_9_2: "It is genuinely difficult to identify any significant weakness as the teacher consistently delivers well structured and engaging laboratory sessions throughout the semester.",
-        question_14:  "The laboratory sessions are very well conducted and the teacher is excellent, so continuing the same quality of instruction and practical demonstrations would be greatly appreciated by all students.",
+    const TEXTAREA_BANK = {
+        strength: "The teacher demonstrates exceptional knowledge and expertise, explains concepts with great clarity, and creates an encouraging learning environment that makes complex work easy to understand and follow.",
 
-        /* Theory textareas */
-        question_6_1: "The teacher explains all concepts very clearly with excellent real world examples and practical applications that help students understand and retain the material effectively throughout the course.",
-        question_7_1: "It is very difficult to find any significant weakness because the teacher is extremely knowledgeable, well prepared, and consistently delivers outstanding lectures that are easy to follow.",
-        question_8_1: "The teacher should continue with the same excellent teaching methodology and approach as everything is working very well and students are benefiting greatly from the current style."
+        weakness: "It is genuinely difficult to identify any significant weakness as the teacher consistently delivers well structured and engaging sessions throughout the entire semester.",
+
+        suggestion: "The sessions are very well conducted and the teacher is excellent, so continuing the same quality of instruction and practical demonstrations would be greatly appreciated by all students.",
+
+        helped: "The teacher explains all concepts very clearly with excellent real world examples and practical applications that help students understand and retain the material effectively throughout the course.",
+
+        difficult: "It is very difficult to find any significant difficulty because the teacher is extremely knowledgeable, well prepared, and consistently delivers outstanding sessions that are easy to follow and understand.",
+
+        change: "The teacher should continue with the same excellent teaching methodology and approach as everything is working very well and students are benefiting greatly from the current teaching style.",
+
+        generic: "The overall quality of teaching and course delivery is very commendable and the teacher has done an excellent job of making the subject interesting and accessible to all students."
     };
 
 
-    /* ============================================================
-       FIND ALL DOCUMENTS (parent + iframes)
-       ============================================================ */
+    /* ========== COLLECT ALL REACHABLE DOCUMENTS ========== */
 
-    function collectDocuments(rootDoc, results) {
+    function collectDocs(rootDoc, results) {
         results.push(rootDoc);
         try {
-            const frames = rootDoc.querySelectorAll("iframe");
-            frames.forEach((frame) => {
+            rootDoc.querySelectorAll("iframe").forEach((frame) => {
                 try {
                     if (frame.contentDocument) {
-                        collectDocuments(frame.contentDocument, results);
+                        collectDocs(frame.contentDocument, results);
                     }
-                } catch (e) {
-                    console.warn("Could not access iframe:", e.message);
-                }
+                } catch (e) { /* cross-origin */ }
             });
         } catch (e) { }
         return results;
     }
 
-    const allDocs = collectDocuments(document, []);
-    console.log(`Found ${allDocs.length} document(s)`);
+    const allDocs = collectDocs(document, []);
 
 
-    /* ============================================================
-       FIND THE FORM DOCUMENT
-       ============================================================ */
+    /* ========== FIND THE FORM DOCUMENT ========== */
 
     let formDoc = null;
 
@@ -70,7 +52,8 @@
         if (
             doc.getElementById("studentFeedbackResponseForm") ||
             doc.getElementById("questionContainer") ||
-            doc.querySelector('input[name="question_1"]')
+            doc.querySelector("input.question_cls") ||
+            doc.querySelector('input[name^="question_"]')
         ) {
             formDoc = doc;
             break;
@@ -80,13 +63,8 @@
     if (!formDoc) {
         for (const doc of allDocs) {
             try {
-                const text = (doc.body ? doc.body.innerText : "").toLowerCase();
-                if (
-                    text.includes("knowledge of the teacher") ||
-                    text.includes("student feedback") ||
-                    text.includes("quality of evaluation") ||
-                    text.includes("pace of teaching")
-                ) {
+                const t = (doc.body ? doc.body.innerText : "").toLowerCase();
+                if (t.includes("student") && t.includes("feedback") && t.includes("submit")) {
                     formDoc = doc;
                     break;
                 }
@@ -95,81 +73,114 @@
     }
 
     if (!formDoc) {
-        console.error("❌ Could not find the feedback form in any document/iframe.");
+        console.error("❌ Could not find feedback form in the page or iframes.");
         return;
     }
 
-    console.log("✓ Feedback form found.");
+    console.log("✓ Feedback form document located.");
 
 
-    /* ============================================================
-       FILL RADIOS
-       ============================================================ */
+    /* ========== FILL RADIO GROUPS DYNAMICALLY ========== */
 
-    let radioFilled = 0, radioFailed = 0;
-
-    for (const [name, value] of Object.entries(RADIO_ANSWERS)) {
-        let radio = formDoc.querySelector(`input[type="radio"][name="${name}"][value="${value}"]`);
-
-        if (!radio) {
-            const all = [...formDoc.querySelectorAll(`input[name="${name}"]`)];
-            const match = all.find(r => r.value === value);
-            if (match) radio = match;
+    const radioNames = new Set();
+    formDoc.querySelectorAll('input[type="radio"]').forEach((r) => {
+        const n = r.name;
+        if (n && (n.startsWith("question_") || r.classList.contains("question_cls"))) {
+            radioNames.add(n);
         }
+    });
+
+    let radioFilled = 0;
+
+    for (const name of radioNames) {
+        const firstRadio = formDoc.querySelector(`input[name="${name}"]`);
+        let isEffort = false;
+
+        if (firstRadio) {
+            const row = firstRadio.closest("tr");
+            if (row) {
+                const rowText = (row.innerText || "").toLowerCase();
+                isEffort = rowText.includes("effort") || rowText.includes("workload");
+            }
+        }
+
+        const targetValue = isEffort ? EFFORT_VALUE : MAIN_VALUE;
+        const radio = formDoc.querySelector(`input[name="${name}"][value="${targetValue}"]`);
 
         if (radio) {
             radio.click();
             radio.dispatchEvent(new Event("change", { bubbles: true }));
             radio.dispatchEvent(new Event("input",  { bubbles: true }));
-            console.log(`✓ ${name}: value ${value}`);
             radioFilled++;
-        } else {
-            if (formDoc.querySelector(`input[name="${name}"]`)) {
-                console.error(`❌ ${name}: value ${value} not found`);
-                radioFailed++;
+        }
+    }
+
+
+    /* ========== FILL TEXTAREAS DYNAMICALLY ========== */
+
+    const container = formDoc.getElementById("questionContainer")
+                   || formDoc.getElementById("studentFeedbackResponseForm")
+                   || formDoc;
+
+    const textareas = container.querySelectorAll("textarea");
+    let textFilled = 0;
+    const usedKeys = new Set();
+
+    for (const textarea of textareas) {
+        let context = " " + (textarea.placeholder || "");
+        const parent = textarea.closest(".sub-question, .question-block, td, tr");
+        if (parent) {
+            context += " " + (parent.innerText || "");
+        }
+        context = context.toLowerCase();
+
+        let textKey = "generic";
+
+        if (context.includes("strength")) {
+            textKey = "strength";
+        } else if (context.includes("weakness")) {
+            textKey = "weakness";
+        } else if (context.includes("helped") || context.includes("aspects of the teaching") || context.includes("aspects of")) {
+            textKey = "helped";
+        } else if (context.includes("difficult") || context.includes("finding particularly")) {
+            textKey = "difficult";
+        } else if (context.includes("change") || context.includes("improve") || context.includes("one thing")) {
+            textKey = "change";
+        } else if (context.includes("suggestion")) {
+            textKey = "suggestion";
+        }
+
+        if (usedKeys.has(textKey)) {
+            const fallbacks = ["generic", "suggestion", "helped", "change"];
+            for (const fb of fallbacks) {
+                if (!usedKeys.has(fb)) {
+                    textKey = fb;
+                    break;
+                }
             }
         }
+        usedKeys.add(textKey);
+
+        const text = TEXTAREA_BANK[textKey] || TEXTAREA_BANK.generic;
+
+        const setter = Object.getOwnPropertyDescriptor(
+            HTMLTextAreaElement.prototype, "value"
+        ).set;
+
+        setter.call(textarea, text);
+        textarea.dispatchEvent(new Event("input",  { bubbles: true }));
+        textarea.dispatchEvent(new Event("change", { bubbles: true }));
+        textFilled++;
     }
 
 
-    /* ============================================================
-       FILL TEXTAREAS
-       ============================================================ */
-
-    let textFilled = 0, textFailed = 0;
-
-    for (const [name, text] of Object.entries(TEXTAREA_ANSWERS)) {
-        const textarea = formDoc.querySelector(`textarea[name="${name}"]`);
-
-        if (textarea) {
-            const setter = Object.getOwnPropertyDescriptor(
-                HTMLTextAreaElement.prototype, "value"
-            ).set;
-            setter.call(textarea, text);
-            textarea.dispatchEvent(new Event("input",  { bubbles: true }));
-            textarea.dispatchEvent(new Event("change", { bubbles: true }));
-            console.log(`✓ ${name}: text filled`);
-            textFilled++;
-        }
-    }
-
-
-    /* ============================================================
-       SUMMARY
-       ============================================================ */
+    /* ========== SUMMARY ========== */
 
     console.log("");
     console.log(
         `%c✓ POSITIVE FEEDBACK FILLED — ${radioFilled} radios, ${textFilled} textareas`,
         "color: green; font-size: 18px; font-weight: bold;"
     );
-
-    if (radioFailed > 0 || textFailed > 0) {
-        console.log(
-            `%c⚠ ${radioFailed} radios and ${textFailed} textareas failed`,
-            "color: red; font-size: 14px; font-weight: bold;"
-        );
-    }
 
     console.log(
         "%cEnter CAPTCHA manually and click Submit.",

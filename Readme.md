@@ -1,86 +1,95 @@
 # FERP Feedback Auto-Filler
 
-A lightweight Chrome Extension and JavaScript tool to automatically fill student feedback forms (End-Term Lab / Theory) with **Positive**, **Neutral**, or **Negative** responses with a single click.
+A dynamic automated feedback filler for the IIT Kharagpur ERP portal. It intelligently fills feedback forms for both **Theory** and **Laboratory** courses with **Positive (👍)**, **Neutral (😐)**, or **Negative (👎)** responses.
 
 ---
 
-## 🚀 Features
+## 🌟 Key Capabilities
 
-- **One-Click Feedback Filling**: Choose between Positive (👍), Neutral (😐), or Negative (👎) presets.
-- **Form-Compliant Textareas**: Pre-written feedback texts meet the **minimum 10-word** requirement for weaknesses, strengths, and suggestions.
-- **Smart Radio Selection**: Automatically selects corresponding rating points (1 to 5) for all questions. Effort and Workload questions (Q11 & Q12) remain balanced at *Average* to avoid student-side discrepancies.
-- **iframe & Dynamic Form Support**: Works seamlessly even when forms are rendered inside ERP iframes.
-- **Console Fallback Scripts**: Standalone `.js` scripts are also available if you prefer using the browser developer console directly.
+- **Fully Dynamic Detection**: No hardcoded question numbers or field names. Seamlessly adapts whether the form is for Theory (lecture classes) or Laboratory (practical classes).
+- **Context-Aware Textarea Responses**: Automatically inspects each text box (Strengths, Weaknesses, Suggestions, Aspects that helped, Areas to change) and fills meaningful responses that easily satisfy the **minimum 10-word** validation.
+- **Fair Rating Logic**:
+  - Positive sets all teacher evaluation criteria to `5` (*Excellent*).
+  - Neutral sets evaluation criteria to `3` (*Good / Average*).
+  - Negative sets evaluation criteria to `1` (*Poor*).
+  - *Student effort* and *Workload* questions are automatically recognized and kept at `3` (*Average*) across all presets so your student profile remains neutral.
+- **Cross-Frame & POST-Iframe Handling**: Traverses the parent page and any embedded frames (`<iframe id="myframe">`) to find and populate the feedback form without cross-origin issues.
 
 ---
 
-## 📦 How to Install the Extension in Chrome / Edge / Brave
+## 🚀 Two Ways to Use
 
-1. Open your browser and go to the extensions page:
+You can use this tool either by **loading the Chrome Extension (Method 1)** or by **pasting the script directly into the Browser Console (Method 2)**.
+
+---
+
+### Method 1: Loading Unpacked in Chrome / Edge / Brave (Recommended)
+
+This method provides a one-click popup interface right in your browser toolbar.
+
+#### Step 1: Install the Extension
+1. Open your Chromium-based browser (Google Chrome, Microsoft Edge, Brave, etc.).
+2. Navigate to the extensions manager:
    - **Chrome**: `chrome://extensions/`
    - **Edge**: `edge://extensions/`
    - **Brave**: `brave://extensions/`
-2. Turn **ON** the **Developer mode** toggle (usually located in the top-right corner).
-3. Click on the **Load unpacked** button.
-4. Browse to and select the `extension` folder located inside this project:
+3. Turn **ON** the **Developer mode** toggle (usually located in the top-right corner).
+4. Click the **Load unpacked** button in the top-left toolbar.
+5. In the file picker, select the `extension` folder inside this project directory:
    ```
    D:\Coding\FERP New\extension
    ```
-5. The extension **FERP Feedback Filler** will now appear in your browser's toolbar/extensions menu.
-   *(Tip: Pin the extension to your toolbar for easy access).*
+6. The extension **FERP Feedback Filler** will now be installed.
+   *(Optional: Click the puzzle piece icon in Chrome and pin "FERP Feedback Filler" to your toolbar for quick access).*
+
+#### Step 2: Fill Feedback with the Extension
+1. Go to the IIT KGP ERP portal and open the **Student Feedback** page:
+   `Academic` ➔ `Feedback` ➔ `Feedback Form`
+2. Select a **Subject** radio button.
+3. Select a **Teacher / Faculty** radio button (wait 1–2 seconds for the questions table to appear).
+4. Click the **FERP Feedback Filler** icon in your toolbar.
+5. Click your desired feedback type:
+   - **👍 Positive**
+   - **😐 Neutral**
+   - **👎 Negative**
+6. A green confirmation badge will show the exact count of radios and textareas filled.
+7. Enter the **Security CAPTCHA** code displayed at the bottom manually.
+8. Click **Submit**. Repeat for the next teacher / subject!
 
 ---
 
-## 📝 How to Use the Extension
+### Method 2: Pasting Standalone JS Files in Browser Console
 
-1. **Log in** to your ERP portal and navigate to the **Student Feedback** page.
-2. Select a **Subject** from the radio buttons.
-3. Select a **Faculty / Teacher** (wait for the question table to load on the screen).
-4. Click the **FERP Feedback Filler** icon in your browser toolbar.
-5. Click your desired feedback option:
-   - **👍 Positive**: Rates 5 (Excellent), with positive strength and praise.
-   - **😐 Neutral**: Rates 3 (Good / Average), with balanced suggestions.
-   - **👎 Negative**: Rates 1 (Poor), detailing constructive criticism.
-6. A green confirmation badge will show how many radio options and text fields were filled.
-7. Solve and enter the **CAPTCHA** manually in the box provided.
-8. Click **Submit** to finalize the feedback.
-9. Repeat steps 2–8 for the remaining subjects/faculties.
+No extension installation required. Ideal if you are using a restricted device, guest browser profile, or quick one-off submission.
 
----
+Three standalone scripts are provided in the project root:
+- [`positive.js`](./positive.js) — Top-tier feedback (`5` rating)
+- [`neutral.js`](./neutral.js) — Balanced feedback (`3` rating)
+- [`negative.js`](./negative.js) — Critical feedback (`1` rating)
 
-## 🛠️ Alternative Method: Browser Console (No Extension Needed)
-
-If you don't want to load the extension or are using a browser without extension support:
-
-1. Open the feedback page, pick the subject and teacher so the questions are displayed.
-2. Press `F12` (or right-click anywhere and select **Inspect**) to open Developer Tools.
-3. Switch to the **Console** tab.
-4. Copy the entire contents of one of the script files:
-   - [`positive.js`](./positive.js)
-   - [`neutral.js`](./neutral.js)
-   - [`negative.js`](./negative.js)
-5. Paste into the console and press `Enter`.
-6. Enter the **CAPTCHA** code manually and submit.
+#### Step-by-Step Instructions:
+1. Open the ERP Feedback Form page.
+2. Select the **Subject** and then the **Faculty** (make sure the question table has loaded).
+3. Open Developer Tools by pressing `F12` (or `Ctrl + Shift + I`, or right-click ➔ **Inspect**).
+4. Switch to the **Console** tab.
+5. Open the file corresponding to the feedback you want (`positive.js`, `neutral.js`, or `negative.js`) in any text editor, select all (`Ctrl + A`), and copy it (`Ctrl + C`).
+6. Paste the code into the DevTools Console prompt and hit `Enter`.
+   *(Note: The script automatically scans the top page and any child iframes like `#myframe`, so you can run it from the default `top` execution context).*
+7. The console will display a green success summary indicating how many radio buttons and text fields were populated.
+8. Type the **CAPTCHA** manually in the input box and click **Submit**.
 
 ---
 
-## ⚙️ Customizing the Responses
+## ⚙️ Customizing Feedback Responses
 
-All preset answers are defined in [`extension/popup.js`](./extension/popup.js). You can customize them anytime:
+If you wish to change the default comments or wording:
 
-1. Open `extension/popup.js` in a text editor.
-2. Locate the `CONFIGS` object near line 65:
-   - Edit `radios` values (`"5"` for Excellent down to `"1"` for Poor).
-   - Edit `texts` values for:
-     - `question_9_1` (Teacher Strength)
-     - `question_9_2` (Teacher Weakness)
-     - `question_14` (Suggestions)
-3. Save the file.
-4. Go to `chrome://extensions/` and click the **Reload (🔄)** icon on the extension card.
+- **For the Extension**: Edit the `TEXTAREA_BANK` object inside [`extension/popup.js`](./extension/popup.js). After saving changes, go to `chrome://extensions/` and click the **Reload (🔄)** icon on the extension card.
+- **For Console Scripts**: Edit the `TEXTAREA_BANK` inside [`positive.js`](./positive.js), [`neutral.js`](./neutral.js), or [`negative.js`](./negative.js).
 
 ---
 
-## ⚠️ Notes
+## 📌 Important Notes
 
-- **CAPTCHA**: The security CAPTCHA cannot and should not be automated; you must type the text from the image manually before clicking submit.
-- **Word Count**: The ERP form enforces a minimum 10-word validation with single spaces between words. All defaults in this extension are pre-formatted to pass these checks cleanly.
+- **CAPTCHA**: The security CAPTCHA cannot be auto-filled and must be entered manually before clicking Submit.
+- **Word Count Requirements**: The ERP system rejects text responses with fewer than 10 words or multiple consecutive spaces. All preset responses in these scripts are pre-formatted to cleanly pass these checks.
